@@ -17,8 +17,28 @@ namespace task3
 
     enum Operation
     {
+        None = 0,
         AddOne = 1,
         Mul2 = 2
+    }
+
+    class Step
+    {
+        public int Value { get; set; }
+        public Operation Operation { get; set; }
+        public Step Pred { get; set; }
+
+        public Step(int value, Operation operation, Step step)
+        {
+            Value = value;
+            Operation = operation;
+            Pred = step;
+        }
+
+        public override string ToString()
+        {
+            return String.Format("Value: {0}; Operation: {1}", this.Value, this.Operation);
+        }
     }
 
     class Program
@@ -33,28 +53,109 @@ namespace task3
             return num * 2;
         }
 
-        static int[] ArrayCommands()
+        static int start = 3;
+        static int end = 20;
+        static void Main(string[] args)
         {
-            return new int[] {1, 1, 1, 1, 1, 1, 1, 2};
+            System.Console.WriteLine("Количество программ {0} для преобразования числа {1} в {2}", CountCalc(start, end), start, end);
+            
+            Varints1();
+        }
+    
+        static void Varints1()
+        {
+            int count_variants = CountCalc(start, end);
+            Step[] variants = new Step[count_variants];
+            Step[] steps = new Step[count_variants * (end * 2)];
+            int pos_variant = 0;
+            FindVariant(start, ref steps, 0, null, ref variants, ref pos_variant);
+            
+            for(int i = 0; i < variants.Length; i++)
+            {
+                //System.Console.WriteLine("{0} - {1}", variants[i], i);
+                var result = GetCommands(variants[i]);
+
+                System.Console.Write("Вариант {0} количество команд {1}\t", i + 1, result.Length);
+                System.Console.Write("{ ");
+                foreach(var item in result)
+                {
+                    System.Console.Write(item + ", ");
+                }
+                System.Console.Write(" }");
+                System.Console.WriteLine();
+            }
         }
 
-        static int DoCommand(int start)
+        static int[] GetCommands(Step variant)
         {
-            var arr = ArrayCommands();
-            int result = start;
-            for (int i = 0; i < arr.Length; i++)
+            int [] operations = new int[end * 2];
+                
+            var last_step = variant;
+            int pos_operations = 0;
+            operations[pos_operations] = (int)last_step.Operation;
+
+            //System.Console.WriteLine(last_step);
+            while(last_step.Pred != null)
             {
-                if(arr[i] == (int)Operation.AddOne)
+                pos_operations += 1;
+                operations[pos_operations] = (int)last_step.Pred.Operation;
+
+                //System.Console.WriteLine(last_step.Pred);
+                last_step = last_step.Pred;
+            }
+
+            int length_data = 0;
+            for(int i = operations.Length - 1; i >= 0; i--)
+            {
+                if(operations[i] != 0)
                 {
-                    result = AddOne(result);
-                }
-                if(arr[i] == (int)Operation.Mul2)
-                {
-                    result = Mul2(result);
+                    length_data = i;
+                    break;
                 }
             }
 
+            int[] result = new int[length_data + 1];
+            
+            int j = 0;
+            for(int i = length_data; i >= 0; i--)
+            {
+                result[j] = operations[i];
+                j += 1;
+            }
+
             return result;
+        }
+
+        static void FindVariant(int value, ref Step[] steps, int pos, Step Pred, ref Step[] variants, ref int pos_variant)
+        {
+            //System.Console.WriteLine(value);
+            if(value == end)
+            {
+                //System.Console.WriteLine(pos_variant);
+                variants[pos_variant] = Pred;
+                pos_variant += 1;
+
+                return;
+            }
+            
+            int oper1 = AddOne(value);
+            int oper2 = Mul2(value);
+            
+            if(oper1 <= end)
+            {
+                steps[pos] = new Step(oper1, Operation.AddOne, Pred);
+                pos += 1;
+                FindVariant(oper1, ref steps, pos, steps[pos - 1], ref variants, ref pos_variant);
+            }
+
+            if(oper2 <= end)
+            {
+                steps[pos] = new Step(oper2, Operation.Mul2, Pred);
+                pos += 1;
+                FindVariant(oper2, ref steps, pos, steps[pos -1], ref variants, ref pos_variant);
+            }
+
+            return;
         }
 
         // http://labs.org.ru/ege-22/#pr22_2
@@ -105,12 +206,34 @@ namespace task3
             return numbers[start];
         } // 18 вариантов
 
-        static void Main(string[] args)
-        {
-            int start = 3;
-            int end = 20;
 
-            /*int result1 = DoCommand(start);
+        static int[] ArrayCommands()
+        {
+            return new int[] {1, 1, 1, 1, 1, 1, 1, 2};
+        }
+
+        static int DoCommand(int start)
+        {
+            var arr = ArrayCommands();
+            int result = start;
+            for (int i = 0; i < arr.Length; i++)
+            {
+                if(arr[i] == (int)Operation.AddOne)
+                {
+                    result = AddOne(result);
+                }
+                if(arr[i] == (int)Operation.Mul2)
+                {
+                    result = Mul2(result);
+                }
+            }
+
+            return result;
+        }
+
+        static void PrintVariant(int start, int end)
+        {
+            int result1 = DoCommand(start);
             if(result1 != end)
             {
                 System.Console.WriteLine("Последовательность команд неверна!");
@@ -126,10 +249,7 @@ namespace task3
                     System.Console.Write(item + ", ");
                 }
                 System.Console.WriteLine("]");
-            }*/
-
-////
-             System.Console.WriteLine("Количество программ {0} для преобразования числа {1} в {2}", CountCalc(start, end), start, end);
+            }
         }
     }
 }
