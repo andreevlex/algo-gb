@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 
 namespace task4
 {
@@ -15,7 +16,7 @@ namespace task4
 
             for (int i = 0; i < n; i++)
             {
-                dist[i] = matrix[start, i];
+                dist[i] = Int32.MaxValue;
             }
             dist[start] = 0;
                 
@@ -60,6 +61,31 @@ namespace task4
             System.Console.WriteLine(" ]");
         }
 
+		static Stack<int> FindShortPathD(int[] dist, int[,] matrix, int start, int end)
+		{
+			var result = new Stack<int>();
+			if (start >= dist.Length || start < 0 || end >= dist.Length || end < 0)
+			{
+				throw new Exception("Нет таких вершин!");
+			}
+
+			result.Push(start);
+			int cur = start;
+			while(cur != end)
+			{
+				for (int j = 0; j < dist.Length; j++)
+				{
+					if (dist[cur] - matrix[cur, j] == dist[j])
+					{
+						result.Push(j);
+						cur = j;
+					}
+				}
+			}
+			
+			return result;
+		}
+
         static void Main(string[] args)
         {
             int[,] matrix = new[,] {
@@ -73,6 +99,14 @@ namespace task4
 
             var result = AlgoDijkstra(6, 0, matrix);
             PrintDist(result);
+
+			var path = FindShortPathD(result, matrix, 5, 0);
+			Console.Write("[ ");
+			foreach (var item in path)
+			{
+				Console.Write(item + ", ");
+			}
+			Console.WriteLine(" ]");
         }
     }
 }
